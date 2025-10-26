@@ -17,12 +17,13 @@ const Servicio = sequelize.define('Servicio', {
   },
   estado: {
     type: DataTypes.TINYINT,
-    defaultValue: 1
+    defaultValue: 1,
+    comment: '1=activo, 0=inactivo'
   },
   duracion: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    comment: 'Duraci�n en minutos'
+    comment: 'Duración en minutos'
   },
   categoria: {
     type: DataTypes.INTEGER,
@@ -34,7 +35,8 @@ const Servicio = sequelize.define('Servicio', {
   },
   porcentaje: {
     type: DataTypes.DECIMAL(5, 2),
-    allowNull: true
+    allowNull: true,
+    comment: 'Porcentaje de comisión para el empleado'
   }
 }, {
   tableName: 'Servicio',

@@ -31,7 +31,7 @@ const Usuario = sequelize.define('Usuario', {
     validate: {
       isEmail: true
     }
-  },
+  }, 
   telefono: {
     type: DataTypes.STRING(20),
     allowNull: true
@@ -50,6 +50,10 @@ const Usuario = sequelize.define('Usuario', {
   },
   rol: {
     type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  contrasena: {
+    type: DataTypes.STRING(255),
     allowNull: false
   }
 }, {

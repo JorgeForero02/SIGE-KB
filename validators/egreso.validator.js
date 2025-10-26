@@ -1,34 +1,32 @@
-﻿const { body } = require('express-validator');
+const { body } = require('express-validator');
 
-const egresoValidator = {
-  create: [
+const createEgresoValidator = [
     body('fecha')
-      .notEmpty().withMessage('La fecha es requerida')
-      .isDate().withMessage('Debe ser una fecha válida'),
+        .optional()
+        .isDate().withMessage('La fecha debe ser válida'),
     body('categoria')
-      .notEmpty().withMessage('La categoría es requerida')
-      .isInt().withMessage('La categoría debe ser un número'),
+        .notEmpty().withMessage('La categoría es requerida')
+        .isInt().withMessage('La categoría debe ser un número entero'),
     body('valor')
-      .notEmpty().withMessage('El valor es requerido')
-      .isDecimal().withMessage('El valor debe ser un número decimal'),
+        .notEmpty().withMessage('El valor es requerido')
+        .isDecimal().withMessage('El valor debe ser un número decimal')
+        .custom((value) => {
+            if (parseFloat(value) <= 0) {
+                throw new Error('El valor debe ser positivo');
+            }
+            return true;
+        }),
+    body('medio_pago')
+        .notEmpty().withMessage('El medio de pago es requerido')
+        .isString().withMessage('El medio de pago debe ser texto'),
+    body('proveedor')
+        .optional()
+        .isString().withMessage('El proveedor debe ser texto'),
     body('descripcion')
-      .optional()
-      .isString().withMessage('La descripción debe ser texto')
-  ],
-  update: [
-    body('fecha')
-      .optional()
-      .isDate().withMessage('Debe ser una fecha válida'),
-    body('valor')
-      .optional()
-      .isDecimal().withMessage('El valor debe ser un número decimal'),
-    body('descripcion')
-      .optional()
-      .isString().withMessage('La descripción debe ser texto'),
-    body('estado')
-      .optional()
-      .isInt({ min: 0, max: 1 }).withMessage('El estado debe ser 0 o 1')
-  ]
-};
+        .optional()
+        .isString().withMessage('La descripción debe ser texto')
+];
 
-module.exports = egresoValidator;
+module.exports = {
+    createEgresoValidator
+};

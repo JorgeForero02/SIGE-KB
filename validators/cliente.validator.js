@@ -1,33 +1,37 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
-const clienteValidator = {
-  create: [
+const createClienteValidator = [
     body('nombre')
-      .notEmpty().withMessage('El nombre es requerido')
-      .isLength({ max: 100 }).withMessage('El nombre no puede exceder 100 caracteres'),
+        .notEmpty().withMessage('El nombre es requerido')
+        .isString().withMessage('El nombre debe ser texto')
+        .isLength({ max: 100 }).withMessage('El nombre no puede exceder 100 caracteres'),
     body('apellido')
-      .notEmpty().withMessage('El apellido es requerido')
-      .isLength({ max: 100 }).withMessage('El apellido no puede exceder 100 caracteres'),
+        .notEmpty().withMessage('El apellido es requerido')
+        .isString().withMessage('El apellido debe ser texto')
+        .isLength({ max: 100 }).withMessage('El apellido no puede exceder 100 caracteres'),
+    body('telefono')
+        .optional()
+        .isString().withMessage('El telÃ©fono debe ser texto'),
     body('tipo_documento')
-      .notEmpty().withMessage('El tipo de documento es requerido'),
+        .notEmpty().withMessage('El tipo de documento es requerido')
+        .isString().withMessage('El tipo de documento debe ser texto'),
     body('documento')
-      .notEmpty().withMessage('El documento es requerido')
-      .isLength({ max: 20 }).withMessage('El documento no puede exceder 20 caracteres'),
-    body('telefono')
-      .optional()
-      .isLength({ max: 20 }).withMessage('El teléfono no puede exceder 20 caracteres')
-  ],
-  update: [
-    body('nombre')
-      .optional()
-      .isLength({ max: 100 }).withMessage('El nombre no puede exceder 100 caracteres'),
-    body('apellido')
-      .optional()
-      .isLength({ max: 100 }).withMessage('El apellido no puede exceder 100 caracteres'),
-    body('telefono')
-      .optional()
-      .isLength({ max: 20 }).withMessage('El teléfono no puede exceder 20 caracteres')
-  ]
-};
+        .notEmpty().withMessage('El documento es requerido')
+        .isString().withMessage('El documento debe ser texto')
+        .isLength({ max: 20 }).withMessage('El documento no puede exceder 20 caracteres')
+];
 
-module.exports = clienteValidator;
+const updateClienteValidator = [
+    param('id').isInt().withMessage('El ID debe ser un nÃºmero entero'),
+    body('nombre')
+        .optional()
+        .isString().withMessage('El nombre debe ser texto'),
+    body('apellido')
+        .optional()
+        .isString().withMessage('El apellido debe ser texto')
+];
+
+module.exports = {
+    createClienteValidator,
+    updateClienteValidator
+};

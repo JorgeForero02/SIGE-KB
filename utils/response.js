@@ -18,7 +18,7 @@ class ApiResponse {
   static validationError(res, errors) {
     return res.status(400).json({
       success: false,
-      message: 'Error de validaci�n',
+      message: 'Error de validacion',
       errors
     });
   }

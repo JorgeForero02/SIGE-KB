@@ -1,37 +1,38 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
-const servicioValidator = {
-  create: [
+const createServicioValidator = [
     body('nombre')
-      .notEmpty().withMessage('El nombre es requerido')
-      .isLength({ max: 100 }).withMessage('El nombre no puede exceder 100 caracteres'),
+        .notEmpty().withMessage('El nombre es requerido')
+        .isString().withMessage('El nombre debe ser texto')
+        .isLength({ max: 100 }).withMessage('El nombre no puede exceder 100 caracteres'),
+    body('descripcion')
+        .optional()
+        .isString().withMessage('La descripciÃ³n debe ser texto'),
     body('duracion')
-      .notEmpty().withMessage('La duración es requerida')
-      .isInt({ min: 1 }).withMessage('La duración debe ser mayor a 0'),
+        .notEmpty().withMessage('La duraciÃ³n es requerida')
+        .isInt({ min: 1 }).withMessage('La duraciÃ³n debe ser un nÃºmero entero positivo'),
     body('categoria')
-      .notEmpty().withMessage('La categoría es requerida')
-      .isInt().withMessage('La categoría debe ser un número'),
+        .notEmpty().withMessage('La categorÃ­a es requerida')
+        .isInt().withMessage('La categorÃ­a debe ser un nÃºmero entero'),
     body('precio')
-      .notEmpty().withMessage('El precio es requerido')
-      .isDecimal().withMessage('El precio debe ser un número decimal'),
+        .notEmpty().withMessage('El precio es requerido')
+        .isDecimal().withMessage('El precio debe ser un nÃºmero decimal'),
     body('porcentaje')
-      .optional()
-      .isDecimal().withMessage('El porcentaje debe ser un número decimal')
-  ],
-  update: [
-    body('nombre')
-      .optional()
-      .isLength({ max: 100 }).withMessage('El nombre no puede exceder 100 caracteres'),
-    body('duracion')
-      .optional()
-      .isInt({ min: 1 }).withMessage('La duración debe ser mayor a 0'),
-    body('precio')
-      .optional()
-      .isDecimal().withMessage('El precio debe ser un número decimal'),
-    body('estado')
-      .optional()
-      .isInt({ min: 0, max: 1 }).withMessage('El estado debe ser 0 o 1')
-  ]
-};
+        .optional()
+        .isDecimal().withMessage('El porcentaje debe ser un nÃºmero decimal')
+];
 
-module.exports = servicioValidator;
+const updateServicioValidator = [
+    param('id').isInt().withMessage('El ID debe ser un nÃºmero entero'),
+    body('nombre')
+        .optional()
+        .isString().withMessage('El nombre debe ser texto'),
+    body('precio')
+        .optional()
+        .isDecimal().withMessage('El precio debe ser un nÃºmero decimal')
+];
+
+module.exports = {
+    createServicioValidator,
+    updateServicioValidator
+};

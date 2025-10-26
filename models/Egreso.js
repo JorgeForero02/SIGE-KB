@@ -19,6 +19,15 @@ const Egreso = sequelize.define('Egreso', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
   },
+  medio_pago: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    comment: 'Efectivo, Tarjeta, Transferencia, etc.'
+  },
+  proveedor: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
   descripcion: {
     type: DataTypes.TEXT,
     allowNull: true

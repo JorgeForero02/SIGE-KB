@@ -1,32 +1,46 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
-const citaValidator = {
-  create: [
+const createCitaValidator = [
     body('fecha')
-      .notEmpty().withMessage('La fecha es requerida')
-      .isDate().withMessage('Debe ser una fecha v·lida'),
+        .notEmpty().withMessage('La fecha es requerida')
+        .isDate().withMessage('La fecha debe ser v√°lida'),
     body('hora_inicio')
-      .notEmpty().withMessage('La hora de inicio es requerida'),
-    body('hora_fin')
-      .notEmpty().withMessage('La hora de fin es requerida'),
+        .notEmpty().withMessage('La hora de inicio es requerida')
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('La hora debe estar en formato HH:MM'),
     body('duracion')
-      .notEmpty().withMessage('La duraciÛn es requerida')
-      .isInt({ min: 1 }).withMessage('La duraciÛn debe ser mayor a 0'),
+        .notEmpty().withMessage('La duraci√≥n es requerida')
+        .isInt({ min: 1 }).withMessage('La duraci√≥n debe ser un n√∫mero entero positivo'),
     body('encargado')
-      .notEmpty().withMessage('El encargado es requerido')
-      .isInt().withMessage('El encargado debe ser un n˙mero'),
+        .notEmpty().withMessage('El encargado es requerido')
+        .isInt().withMessage('El encargado debe ser un n√∫mero entero'),
     body('cliente')
-      .notEmpty().withMessage('El cliente es requerido')
-      .isInt().withMessage('El cliente debe ser un n˙mero')
-  ],
-  update: [
-    body('fecha')
-      .optional()
-      .isDate().withMessage('Debe ser una fecha v·lida'),
-    body('duracion')
-      .optional()
-      .isInt({ min: 1 }).withMessage('La duraciÛn debe ser mayor a 0')
-  ]
-};
+        .notEmpty().withMessage('El cliente es requerido')
+        .isInt().withMessage('El cliente debe ser un n√∫mero entero')
+];
 
-module.exports = citaValidator;
+const updateCitaValidator = [
+    param('id').isInt().withMessage('El ID debe ser un n√∫mero entero'),
+    body('fecha')
+        .optional()
+        .isDate().withMessage('La fecha debe ser v√°lida'),
+    body('hora_inicio')
+        .optional()
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('La hora debe estar en formato HH:MM'),
+    body('duracion')
+        .optional()
+        .isInt({ min: 1 }).withMessage('La duraci√≥n debe ser un n√∫mero entero positivo')
+];
+
+const updateEstadoCitaValidator = [
+    param('id').isInt().withMessage('El ID debe ser un n√∫mero entero'),
+    body('estado')
+        .notEmpty().withMessage('El estado es requerido')
+        .isIn(['pendiente', 'confirmada', 'cancelada', 'completada'])
+        .withMessage('Estado inv√°lido')
+];
+
+module.exports = {
+    createCitaValidator,
+    updateCitaValidator,
+    updateEstadoCitaValidator
+};

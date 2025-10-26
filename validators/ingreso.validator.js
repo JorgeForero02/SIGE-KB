@@ -1,40 +1,32 @@
-﻿const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 
-const ingresoValidator = {
-  create: [
+const createIngresoValidator = [
     body('fecha')
-      .notEmpty().withMessage('La fecha es requerida')
-      .isDate().withMessage('Debe ser una fecha válida'),
+        .optional()
+        .isDate().withMessage('La fecha debe ser válida'),
     body('servicio')
-      .notEmpty().withMessage('El servicio es requerido')
-      .isInt().withMessage('El servicio debe ser un número'),
+        .notEmpty().withMessage('El servicio es requerido')
+        .isInt().withMessage('El servicio debe ser un número entero'),
+    body('empleado')
+        .notEmpty().withMessage('El empleado es requerido')
+        .isInt().withMessage('El empleado debe ser un número entero'),
     body('cita')
-      .optional()
-      .isInt().withMessage('La cita debe ser un número'),
+        .optional()
+        .isInt().withMessage('La cita debe ser un número entero'),
     body('extra')
-      .optional()
-      .isDecimal().withMessage('El extra debe ser un número decimal'),
+        .optional()
+        .isDecimal().withMessage('El extra debe ser un número decimal'),
     body('valor')
-      .notEmpty().withMessage('El valor es requerido')
-      .isDecimal().withMessage('El valor debe ser un número decimal'),
+        .notEmpty().withMessage('El valor es requerido')
+        .isDecimal().withMessage('El valor debe ser un número decimal'),
+    body('medio_pago')
+        .notEmpty().withMessage('El medio de pago es requerido')
+        .isString().withMessage('El medio de pago debe ser texto'),
     body('descripcion')
-      .optional()
-      .isString().withMessage('La descripción debe ser texto')
-  ],
-  update: [
-    body('fecha')
-      .optional()
-      .isDate().withMessage('Debe ser una fecha válida'),
-    body('extra')
-      .optional()
-      .isDecimal().withMessage('El extra debe ser un número decimal'),
-    body('valor')
-      .optional()
-      .isDecimal().withMessage('El valor debe ser un número decimal'),
-    body('descripcion')
-      .optional()
-      .isString().withMessage('La descripción debe ser texto')
-  ]
-};
+        .optional()
+        .isString().withMessage('La descripción debe ser texto')
+];
 
-module.exports = ingresoValidator;
+module.exports = {
+    createIngresoValidator
+};

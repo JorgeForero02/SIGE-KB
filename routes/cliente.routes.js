@@ -1,13 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const ClienteController = require('../controllers/cliente.controller');
-const clienteValidator = require('../validators/cliente.validator');
+const clienteController = require('../controllers/cliente.controller');
+const { authenticateToken, authorize } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
+const { createClienteValidator, updateClienteValidator } = require('../validators/cliente.validator');
+const { param } = require('express-validator');
 
-router.get('/', ClienteController.getAll);
-router.get('/:id', ClienteController.getById);
-router.post('/', clienteValidator.create, validate, ClienteController.create);
-router.put('/:id', clienteValidator.update, validate, ClienteController.update);
-router.delete('/:id', ClienteController.delete);
+// Todas las rutas requieren autenticación
+router.use(authenticateToken);
+
+// Obtener todos los clientes
+router.get('/', clienteController.getAll);
+
+// Buscar cliente por documento
+router.get('/documento/:documento', clienteController.getByDocumento);
+
+// Obtener cliente por ID
+router.get('/:id',
+    [param('id').isInt()],
+    validate,
+    clienteController.getById
+);
+
+// Crear cliente
+router.post('/',
+    createClienteValidator,
+    validate,
+    clienteController.create
+);
+
+// Actualizar cliente
+router.put('/:id',
+    updateClienteValidator,
+    validate,
+    clienteController.update
+);
 
 module.exports = router;

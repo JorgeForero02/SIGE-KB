@@ -1,77 +1,163 @@
-const db = require('../models');
+const { Categoria, Servicio } = require('../models');
 const ApiResponse = require('../utils/response');
-const Categoria = db.Categoria;
+const AuditoriaService = require('../services/auditoria.service');
+const { Op } = require('sequelize');
 
-const CategoriaController = {
-  // Obtener todos
-  getAll: async (req, res, next) => {
-    try {
-      const items = await Categoria.findAll();
-      return ApiResponse.success(res, items, 'Lista obtenida correctamente');
-    } catch (error) {
-      next(error);
+class CategoriaController {
+    async getAll(req, res) {
+        try {
+            const { estado } = req.query;
+
+            const where = {};
+            if (estado !== undefined) where.estado = estado;
+
+            const categorias = await Categoria.findAll({
+                where,
+                include: [{
+                    model: Servicio,
+                    as: 'servicios',
+                    attributes: ['id', 'nombre', 'precio', 'estado']
+                }],
+                order: [['nombre', 'ASC']]
+            });
+
+            return ApiResponse.success(res, categorias, 'Categorías obtenidas exitosamente');
+        } catch (error) {
+            console.error('Error al obtener categorías:', error);
+            return ApiResponse.error(res, 'Error al obtener categorías', 500);
+        }
     }
-  },
 
-  // Obtener por ID
-  getById: async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const item = await Categoria.findByPk(id);
-      
-      if (!item) {
-        return ApiResponse.notFound(res, 'Registro no encontrado');
-      }
-      
-      return ApiResponse.success(res, item, 'Registro obtenido correctamente');
-    } catch (error) {
-      next(error);
+    async getById(req, res) {
+        try {
+            const { id } = req.params;
+
+            const categoria = await Categoria.findByPk(id, {
+                include: [{
+                    model: Servicio,
+                    as: 'servicios'
+                }]
+            });
+
+            if (!categoria) {
+                return ApiResponse.notFound(res, 'Categoría no encontrada');
+            }
+
+            return ApiResponse.success(res, categoria, 'Categoría obtenida exitosamente');
+        } catch (error) {
+            console.error('Error al obtener categoría:', error);
+            return ApiResponse.error(res, 'Error al obtener categoría', 500);
+        }
     }
-  },
 
-  // Crear
-  create: async (req, res, next) => {
-    try {
-      const newItem = await Categoria.create(req.body);
-      return ApiResponse.success(res, newItem, 'Registro creado correctamente', 201);
-    } catch (error) {
-      next(error);
+    async create(req, res) {
+        try {
+            const { nombre, descripcion } = req.body;
+
+            // Verificar duplicado
+            const existente = await Categoria.findOne({ where: { nombre } });
+            if (existente) {
+                return ApiResponse.error(res, 'Ya existe una categoría con ese nombre', 409);
+            }
+
+            const categoria = await Categoria.create({
+                nombre,
+                descripcion,
+                estado: 1
+            });
+
+            await AuditoriaService.registrar(
+                'Categoria',
+                'Crear',
+                `Categoría creada: ${nombre}`,
+                req.user.id
+            );
+
+            return ApiResponse.success(res, categoria, 'Categoría creada exitosamente', 201);
+        } catch (error) {
+            console.error('Error al crear categoría:', error);
+            return ApiResponse.error(res, 'Error al crear categoría', 500);
+        }
     }
-  },
 
-  // Actualizar
-  update: async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const item = await Categoria.findByPk(id);
-      
-      if (!item) {
-        return ApiResponse.notFound(res, 'Registro no encontrado');
-      }
-      
-      await item.update(req.body);
-      return ApiResponse.success(res, item, 'Registro actualizado correctamente');
-    } catch (error) {
-      next(error);
+    async update(req, res) {
+        try {
+            const { id } = req.params;
+            const { nombre, descripcion, estado } = req.body;
+
+            const categoria = await Categoria.findByPk(id);
+            if (!categoria) {
+                return ApiResponse.notFound(res, 'Categoría no encontrada');
+            }
+
+            // Verificar duplicado si se cambió el nombre
+            if (nombre && nombre !== categoria.nombre) {
+                const existente = await Categoria.findOne({
+                    where: { nombre, id: { [Op.ne]: id } }
+                });
+                if (existente) {
+                    return ApiResponse.error(res, 'Ya existe una categoría con ese nombre', 409);
+                }
+            }
+
+            await categoria.update({
+                nombre: nombre || categoria.nombre,
+                descripcion: descripcion !== undefined ? descripcion : categoria.descripcion,
+                estado: estado !== undefined ? estado : categoria.estado
+            });
+
+            await AuditoriaService.registrar(
+                'Categoria',
+                'Actualizar',
+                `Categoría actualizada: ${categoria.nombre}`,
+                req.user.id
+            );
+
+            return ApiResponse.success(res, categoria, 'Categoría actualizada exitosamente');
+        } catch (error) {
+            console.error('Error al actualizar categoría:', error);
+            return ApiResponse.error(res, 'Error al actualizar categoría', 500);
+        }
     }
-  },
 
-  // Eliminar
-  delete: async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const item = await Categoria.findByPk(id);
-      
-      if (!item) {
-        return ApiResponse.notFound(res, 'Registro no encontrado');
-      }
-      
-      await item.destroy();
-      return ApiResponse.success(res, null, 'Registro eliminado correctamente');
-    } catch (error) {
-      next(error);
+    async delete(req, res) {
+        try {
+            const { id } = req.params;
+
+            const categoria = await Categoria.findByPk(id);
+            if (!categoria) {
+                return ApiResponse.notFound(res, 'Categoría no encontrada');
+            }
+
+            // Verificar si tiene servicios activos
+            const serviciosActivos = await Servicio.count({
+                where: { categoria: id, estado: 1 }
+            });
+
+            if (serviciosActivos > 0) {
+                return ApiResponse.error(
+                    res,
+                    'No se puede eliminar la categoría porque tiene servicios activos asociados',
+                    400
+                );
+            }
+
+            // Soft delete
+            await categoria.update({ estado: 0 });
+
+            await AuditoriaService.registrar(
+                'Categoria',
+                'Eliminar',
+                `Categoría eliminada: ${categoria.nombre}`,
+                req.user.id
+            );
+
+            return ApiResponse.success(res, null, 'Categoría eliminada exitosamente');
+        } catch (error) {
+            console.error('Error al eliminar categoría:', error);
+            return ApiResponse.error(res, 'Error al eliminar categoría', 500);
+        }
     }
-  }
-};
+}
 
-module.exports = CategoriaController;
+module.exports = new CategoriaController();

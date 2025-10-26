@@ -19,6 +19,11 @@ const Ingreso = sequelize.define('Ingreso', {
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  empleado: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: 'Colaboradora que realizó el servicio'
+  },
   extra: {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0
@@ -26,6 +31,11 @@ const Ingreso = sequelize.define('Ingreso', {
   valor: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
+  },
+  medio_pago: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    comment: 'Efectivo, Tarjeta, Transferencia, etc.'
   },
   descripcion: {
     type: DataTypes.TEXT,
