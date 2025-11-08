@@ -146,6 +146,16 @@ Nomina.belongsTo(Usuario, {
   as: 'empleadoInfo' 
 });
 
+Servicio.hasMany(Cita, { 
+  foreignKey: 'servicio', 
+  as: 'citas' 
+});
+
+Cita.belongsTo(Servicio, { 
+  foreignKey: 'servicio', 
+  as: 'servicioInfo' 
+});
+
 module.exports = {
   sequelize,
   Rol,

@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 class CitaController {
     async getAll(req, res) {
         try {
-            const { fecha_inicio, fecha_fin, encargado, cliente, estado } = req.query;
+            const { fecha_inicio, fecha_fin, encargado, cliente, estado, servicio } = req.query;
 
             const where = {};
 
@@ -23,6 +23,7 @@ class CitaController {
             if (encargado) where.encargado = encargado;
             if (cliente) where.cliente = cliente;
             if (estado) where.estado = estado;
+            if (servicio) where.servicio = servicio;
 
             const citas = await Cita.findAll({
                 where,
@@ -36,6 +37,11 @@ class CitaController {
                         model: Usuario,
                         as: 'encargadoInfo',
                         attributes: ['id', 'nombre', 'apellido']
+                    },
+                    {
+                        model: Servicio,
+                        as: 'servicioInfo',
+                        attributes: ['id', 'nombre', 'descripcion', 'precio', 'duracion']
                     }
                 ],
                 order: [['fecha', 'DESC'], ['hora_inicio', 'DESC']]
@@ -62,6 +68,11 @@ class CitaController {
                         model: Usuario,
                         as: 'encargadoInfo',
                         attributes: ['id', 'nombre', 'apellido']
+                    },
+                    {
+                        model: Servicio,
+                        as: 'servicioInfo',
+                        attributes: ['id', 'nombre', 'descripcion', 'precio', 'duracion']
                     }
                 ]
             });
@@ -87,7 +98,6 @@ class CitaController {
             if (fecha) {
                 where.fecha = fecha;
             } else {
-                // Por defecto, mostrar citas futuras
                 where.fecha = { [Op.gte]: new Date().toISOString().split('T')[0] };
             }
 
@@ -98,6 +108,16 @@ class CitaController {
                         model: Cliente,
                         as: 'clienteInfo',
                         attributes: ['id', 'nombre', 'apellido', 'telefono']
+                    },
+                    {
+                        model: Usuario,
+                        as: 'encargadoInfo',
+                        attributes: ['id', 'nombre', 'apellido']
+                    },
+                    {
+                        model: Servicio,
+                        as: 'servicioInfo',
+                        attributes: ['id', 'nombre', 'descripcion', 'precio', 'duracion']
                     }
                 ],
                 order: [['fecha', 'ASC'], ['hora_inicio', 'ASC']]
@@ -112,15 +132,25 @@ class CitaController {
 
     async create(req, res) {
         try {
+            console.log('=== INICIO CREATE CITA ===');
+            console.log('Body recibido:', JSON.stringify(req.body, null, 2));
+
             const {
                 fecha,
                 hora_inicio,
                 duracion,
                 encargado,
-                cliente
+                cliente,
+                servicio
             } = req.body;
 
-            // Validar que el empleado existe y está activo
+            // Validación explícita
+            if (!servicio) {
+                console.error('ERROR: servicio no proporcionado');
+                return ApiResponse.error(res, 'El servicio es requerido', 400);
+            }
+
+            console.log('Validando empleado:', encargado);
             const empleado = await Usuario.findOne({
                 where: { id: encargado, estado: 1 }
             });
@@ -128,39 +158,43 @@ class CitaController {
                 return ApiResponse.error(res, 'El empleado especificado no existe o está inactivo', 400);
             }
 
-            // Validar que el cliente existe
+            console.log('Validando cliente:', cliente);
             const clienteExiste = await Cliente.findByPk(cliente);
             if (!clienteExiste) {
                 return ApiResponse.error(res, 'El cliente especificado no existe', 400);
+            }
+
+            console.log('Validando servicio:', servicio);
+            const servicioExiste = await Servicio.findByPk(servicio);
+            if (!servicioExiste) {
+                return ApiResponse.error(res, 'El servicio especificado no existe', 400);
             }
 
             // Calcular hora_fin
             const [horas, minutos] = hora_inicio.split(':');
             const inicioDate = new Date();
             inicioDate.setHours(parseInt(horas), parseInt(minutos), 0);
-            inicioDate.setMinutes(inicioDate.getMinutes() + duracion);
+            inicioDate.setMinutes(inicioDate.getMinutes() + parseInt(duracion));
 
             const hora_fin = inicioDate.toTimeString().split(' ')[0].substring(0, 5);
+            console.log('Hora calculada:', { hora_inicio, hora_fin, duracion });
 
-            // Verificar solapamiento de horarios
+            // Verificar solapamiento de horarios - CORREGIDO
+            console.log('Verificando solapamiento...');
             const solapamiento = await Cita.findOne({
                 where: {
                     fecha,
                     encargado,
-                    estado: { [Op.in]: ['pendiente', 'confirmada'] },
                     [Op.or]: [
                         {
-                            // La nueva cita comienza durante una existente
                             hora_inicio: { [Op.lte]: hora_inicio },
                             hora_fin: { [Op.gt]: hora_inicio }
                         },
                         {
-                            // La nueva cita termina durante una existente
                             hora_inicio: { [Op.lt]: hora_fin },
                             hora_fin: { [Op.gte]: hora_fin }
                         },
                         {
-                            // La nueva cita envuelve una existente
                             hora_inicio: { [Op.gte]: hora_inicio },
                             hora_fin: { [Op.lte]: hora_fin }
                         }
@@ -169,6 +203,7 @@ class CitaController {
             });
 
             if (solapamiento) {
+                console.log('Solapamiento detectado:', solapamiento.id);
                 return ApiResponse.error(
                     res,
                     'Ya existe una cita en ese horario para el empleado seleccionado',
@@ -176,15 +211,29 @@ class CitaController {
                 );
             }
 
+            console.log('Creando cita con datos:', {
+                fecha,
+                hora_inicio,
+                hora_fin,
+                duracion: parseInt(duracion),
+                encargado: parseInt(encargado),
+                cliente: parseInt(cliente),
+                servicio: parseInt(servicio),
+                estado: 'pendiente'
+            });
+
             const cita = await Cita.create({
                 fecha,
                 hora_inicio,
                 hora_fin,
-                duracion,
-                encargado,
-                cliente,
+                duracion: parseInt(duracion),
+                encargado: parseInt(encargado),
+                cliente: parseInt(cliente),
+                servicio: parseInt(servicio),
                 estado: 'pendiente'
             });
+
+            console.log('Cita creada con ID:', cita.id);
 
             await AuditoriaService.registrar(
                 'Cita',
@@ -196,14 +245,18 @@ class CitaController {
             const citaCompleta = await Cita.findByPk(cita.id, {
                 include: [
                     { model: Cliente, as: 'clienteInfo' },
-                    { model: Usuario, as: 'encargadoInfo', attributes: ['id', 'nombre', 'apellido'] }
+                    { model: Usuario, as: 'encargadoInfo', attributes: ['id', 'nombre', 'apellido'] },
+                    { model: Servicio, as: 'servicioInfo', attributes: ['id', 'nombre', 'descripcion', 'precio', 'duracion'] }
                 ]
             });
 
+            console.log('=== FIN CREATE CITA ===');
             return ApiResponse.success(res, citaCompleta, 'Cita creada exitosamente', 201);
         } catch (error) {
-            console.error('Error al crear cita:', error);
-            return ApiResponse.error(res, 'Error al crear cita', 500);
+            console.error('=== ERROR EN CREATE CITA ===');
+            console.error('Error completo:', error);
+            console.error('Stack:', error.stack);
+            return ApiResponse.error(res, error.message || 'Error al crear cita', 500);
         }
     }
 
@@ -215,7 +268,8 @@ class CitaController {
                 hora_inicio,
                 duracion,
                 encargado,
-                cliente
+                cliente,
+                servicio
             } = req.body;
 
             const cita = await Cita.findByPk(id);
@@ -223,7 +277,6 @@ class CitaController {
                 return ApiResponse.notFound(res, 'Cita no encontrada');
             }
 
-            // No permitir editar citas completadas o canceladas
             if (cita.estado === 'completada' || cita.estado === 'cancelada') {
                 return ApiResponse.error(
                     res,
@@ -232,7 +285,6 @@ class CitaController {
                 );
             }
 
-            // Calcular nueva hora_fin si cambió duración u hora_inicio
             let hora_fin = cita.hora_fin;
             if (hora_inicio || duracion) {
                 const horaInicio = hora_inicio || cita.hora_inicio;
@@ -241,12 +293,11 @@ class CitaController {
                 const [horas, minutos] = horaInicio.split(':');
                 const inicioDate = new Date();
                 inicioDate.setHours(parseInt(horas), parseInt(minutos), 0);
-                inicioDate.setMinutes(inicioDate.getMinutes() + duracionNueva);
+                inicioDate.setMinutes(inicioDate.getMinutes() + parseInt(duracionNueva));
 
                 hora_fin = inicioDate.toTimeString().split(' ')[0].substring(0, 5);
             }
 
-            // Verificar solapamiento si cambió fecha, hora o empleado
             if (fecha || hora_inicio || encargado) {
                 const fechaVerificar = fecha || cita.fecha;
                 const horaInicioVerificar = hora_inicio || cita.hora_inicio;
@@ -257,7 +308,6 @@ class CitaController {
                         id: { [Op.ne]: id },
                         fecha: fechaVerificar,
                         encargado: encargadoVerificar,
-                        estado: { [Op.in]: ['pendiente', 'confirmada'] },
                         [Op.or]: [
                             {
                                 hora_inicio: { [Op.lte]: horaInicioVerificar },
@@ -290,7 +340,8 @@ class CitaController {
                 hora_fin,
                 duracion: duracion || cita.duracion,
                 encargado: encargado || cita.encargado,
-                cliente: cliente || cita.cliente
+                cliente: cliente || cita.cliente,
+                servicio: servicio || cita.servicio
             });
 
             await AuditoriaService.registrar(
@@ -303,7 +354,8 @@ class CitaController {
             const citaActualizada = await Cita.findByPk(id, {
                 include: [
                     { model: Cliente, as: 'clienteInfo' },
-                    { model: Usuario, as: 'encargadoInfo', attributes: ['id', 'nombre', 'apellido'] }
+                    { model: Usuario, as: 'encargadoInfo', attributes: ['id', 'nombre', 'apellido'] },
+                    { model: Servicio, as: 'servicioInfo', attributes: ['id', 'nombre', 'descripcion', 'precio', 'duracion'] }
                 ]
             });
 
@@ -358,7 +410,6 @@ class CitaController {
                 return ApiResponse.notFound(res, 'Cita no encontrada');
             }
 
-            // Cambiar estado a cancelada en lugar de eliminar
             await cita.update({ estado: 'cancelada' });
 
             await AuditoriaService.registrar(

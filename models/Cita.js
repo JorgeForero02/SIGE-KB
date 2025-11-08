@@ -22,7 +22,7 @@ const Cita = sequelize.define('Cita', {
   duracion: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    comment: 'Duración en minutos'
+    comment: 'Duraciï¿½n en minutos'
   },
   encargado: {
     type: DataTypes.INTEGER,
@@ -31,6 +31,25 @@ const Cita = sequelize.define('Cita', {
   cliente: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  servicio: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  estado: {
+    type: DataTypes.ENUM('pendiente', 'confirmada', 'completada', 'cancelada'),
+    allowNull: false,
+    defaultValue: 'pendiente',
+    comment: 'Estado de la cita',
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    onUpdate: DataTypes.NOW,
   }
 }, {
   tableName: 'Cita',
