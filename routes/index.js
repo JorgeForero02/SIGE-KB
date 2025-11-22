@@ -12,6 +12,9 @@ const egresoRoutes = require('./egreso.routes');
 const categoriaEgresoRoutes = require('./categoriaEgreso.routes');
 const clienteRoutes = require('./cliente.routes');
 const citaRoutes = require('./cita.routes');
+const nominaRoutes = require('./nomina.routes');
+const reporteRoutes = require('./reporte.routes');
+const consultaRoutes = require('./consulta.routes');
 
 // Montar rutas
 router.use('/auth', authRoutes);
@@ -24,5 +27,8 @@ router.use('/egresos', egresoRoutes);
 router.use('/categorias-egreso', categoriaEgresoRoutes);
 router.use('/clientes', clienteRoutes);
 router.use('/citas', citaRoutes);
+router.use('/nominas', nominaRoutes);
+router.use('/reportes', reporteRoutes);
+router.use('/consultas', consultaRoutes);
 
 module.exports = router;

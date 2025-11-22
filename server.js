@@ -41,7 +41,7 @@ db.sequelize.authenticate()
     console.log('Conexión a la base de datos establecida correctamente');
 
     if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync({ alter: true });
+      await db.sequelize.sync();
     } else {
       await db.sequelize.sync();
       console.log('Modelos sincronizados');
