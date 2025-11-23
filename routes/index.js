@@ -16,6 +16,7 @@ const nominaRoutes = require('./nomina.routes');
 const reporteRoutes = require('./reporte.routes');
 const consultaRoutes = require('./consulta.routes');
 const descuentoNominaRoutes = require('./descuentoNomina.routes');
+const historialTarifasRoutes = require('./historialTarifa.routes');
 
 // Montar rutas
 router.use('/auth', authRoutes);
@@ -32,5 +33,6 @@ router.use('/nominas', nominaRoutes);
 router.use('/reportes', reporteRoutes);
 router.use('/consultas', consultaRoutes);
 router.use('/descuentos-nomina', descuentoNominaRoutes);
+router.use('/historial-tarifas', historialTarifasRoutes);
 
 module.exports = router;
