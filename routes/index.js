@@ -15,6 +15,7 @@ const citaRoutes = require('./cita.routes');
 const nominaRoutes = require('./nomina.routes');
 const reporteRoutes = require('./reporte.routes');
 const consultaRoutes = require('./consulta.routes');
+const descuentoNominaRoutes = require('./descuentoNomina.routes');
 
 // Montar rutas
 router.use('/auth', authRoutes);
@@ -30,5 +31,6 @@ router.use('/citas', citaRoutes);
 router.use('/nominas', nominaRoutes);
 router.use('/reportes', reporteRoutes);
 router.use('/consultas', consultaRoutes);
+router.use('/descuentos-nomina', descuentoNominaRoutes);
 
 module.exports = router;

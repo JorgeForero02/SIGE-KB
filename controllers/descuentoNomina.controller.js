@@ -1,5 +1,5 @@
-const { DescuentoNomina, Usuario } = require('../models/descuentoNomina.model');
-const apiResponse = require('../helpers/apiResponse');
+const { DescuentoNomina, Usuario } = require('../models');
+const apiResponse = require('../utils/response');
 const { Op } = require('sequelize');
 
 class DescuentoNominaController {
