@@ -1,5 +1,5 @@
 const { DescuentoNomina, Usuario } = require('../models');
-const apiResponse = require('../utils/response');
+const ApiResponse = require('../utils/response');
 const { Op } = require('sequelize');
 
 class DescuentoNominaController {
@@ -13,9 +13,9 @@ class DescuentoNominaController {
                 fechaDescuento,
                 idEmpleado
             });
-            return apiResponse.successResponseWithData(res, 'Descuento de nómina creado exitosamente', nuevoDescuento);
+            return ApiResponse.successResponseWithData(res, 'Descuento de nómina creado exitosamente', nuevoDescuento);
         } catch (error) {
-            return apiResponse.errorResponse(res, error.message);
+            return ApiResponse.errorResponse(res, error.message);
         }
     }
     // Obtener todos los descuentos de nómina
@@ -28,9 +28,9 @@ class DescuentoNominaController {
             }
             const descuentos = await DescuentoNomina.findAll({ where: filtros, include: Usuario });
 
-            return apiResponse.successResponseWithData(res, 'Descuentos de nómina obtenidos exitosamente', descuentos);
+            return ApiResponse.success(res, 'Descuentos de nómina obtenidos exitosamente', descuentos);
         } catch (error) {
-            return apiResponse.errorResponse(res, error.message);
+            return ApiResponse.error(res, error.message);
         }
     }
 
@@ -45,11 +45,11 @@ class DescuentoNominaController {
             }
             const descuento = await DescuentoNomina.findOne({ where: filtros, include: Usuario });
             if (!descuento) {
-                return apiResponse.notFoundResponse(res, 'Descuento de nómina no encontrado');
+                return ApiResponse.notFound(res, 'Descuento de nómina no encontrado');
             }
-            return apiResponse.successResponseWithData(res, 'Descuento de nómina obtenido exitosamente', descuento);
+            return ApiResponse.success(res, 'Descuento de nómina obtenido exitosamente', descuento);
         } catch (error) {
-            return apiResponse.errorResponse(res, error.message);
+            return ApiResponse.error(res, error.message);
         }
     }
 }
