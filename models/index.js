@@ -14,6 +14,7 @@ const Nomina = require('./Nomina');
 const Auditoria = require('./Auditoria');
 const CierreDiario = require('./CierreDiario');
 const UsuarioCategoria = require('./UsuarioCategoria');
+const DescuentoNomina = require('./DescuentoNomina');
 
 // Relaciones Usuario - Rol
 Rol.hasMany(Usuario, {
@@ -156,6 +157,16 @@ Cita.belongsTo(Servicio, {
   as: 'servicioInfo' 
 });
 
+DescuentoNomina.belongsTo(Usuario, {
+  foreignKey: 'idEmpleado',
+  as: 'empleadoInfo'
+});
+
+Usuario.hasMany(DescuentoNomina, {
+  foreignKey: 'idEmpleado',
+  as: 'descuentosNomina'
+});
+
 module.exports = {
   sequelize,
   Rol,
@@ -171,5 +182,6 @@ module.exports = {
   Nomina,
   Auditoria,
   CierreDiario,
-  UsuarioCategoria
+  UsuarioCategoria,  
+  DescuentoNomina
 };

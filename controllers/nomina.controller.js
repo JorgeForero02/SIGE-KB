@@ -1,4 +1,4 @@
-const { Ingreso, Servicio, Usuario, Nomina } = require('../models');
+const { Ingreso, Servicio, Usuario, Nomina, DescuentoNomina } = require('../models');
 const ApiResponse = require('../utils/response');
 const AuditoriaService = require('../services/auditoria.service');
 const { Op } = require('sequelize');
@@ -54,14 +54,14 @@ class NominaController {
                 transaction
             });
 
-            // Calcular el total de la nómina
-            let totalNomina = 0;
+            // Calcular el total de comisiones
+            let totalComisiones = 0;
             const detalleServicios = [];
 
             for (const ingreso of ingresos) {
                 const porcentaje = ingreso.servicioInfo.porcentaje || 0;
                 const comision = (ingreso.valor * porcentaje) / 100;
-                totalNomina += comision;
+                totalComisiones += comision;
 
                 detalleServicios.push({
                     fecha: ingreso.fecha,
@@ -72,12 +72,40 @@ class NominaController {
                 });
             }
 
-            // Crear registro de nómina
+            // Obtener descuentos del empleado en el período
+            const descuentos = await DescuentoNomina.findAll({
+                where: {
+                    idEmpleado: empleado,
+                    fechaDescuento: {
+                        [Op.between]: [fecha_inicio, fecha_fin]
+                    }
+                },
+                transaction
+            });
+
+            // Calcular total de descuentos
+            let totalDescuentos = 0;
+            const detalleDescuentos = [];
+
+            for (const descuento of descuentos) {
+                totalDescuentos += parseFloat(descuento.valor);
+                detalleDescuentos.push({
+                    id: descuento.id,
+                    descripcion: descuento.descripcion,
+                    valor: parseFloat(descuento.valor),
+                    fecha: descuento.fechaDescuento
+                });
+            }
+
+            // Calcular total neto (comisiones - descuentos)
+            const totalNeto = totalComisiones - totalDescuentos;
+
+            // Crear registro de nómina con el total neto
             const nomina = await Nomina.create({
                 fecha_inicio,
                 fecha_fin,
                 empleado,
-                total: totalNomina
+                total: totalNeto
             }, { transaction });
 
             await transaction.commit();
@@ -87,15 +115,18 @@ class NominaController {
                 req.user.id,
                 'Nómina calculada',
                 'CREATE',
-                `Nómina calculada para empleado ${empleadoInfo.nombre} ${empleadoInfo.apellido} del ${fecha_inicio} al ${fecha_fin}. Total: $${totalNomina}`
+                `Nómina calculada para empleado ${empleadoInfo.nombre} ${empleadoInfo.apellido} del ${fecha_inicio} al ${fecha_fin}. Total bruto: $${totalComisiones}, Descuentos: $${totalDescuentos}, Total neto: $${totalNeto}`
             );
 
             return ApiResponse.success(res, {
                 nomina,
                 detalle: detalleServicios,
+                descuentos: detalleDescuentos,
                 resumen: {
                     total_servicios: ingresos.length,
-                    total_comisiones: totalNomina
+                    total_comisiones: parseFloat(totalComisiones.toFixed(2)),
+                    total_descuentos: parseFloat(totalDescuentos.toFixed(2)),
+                    total_neto: parseFloat(totalNeto.toFixed(2))
                 }
             }, 'Nómina calculada exitosamente', 201);
 
@@ -140,7 +171,7 @@ class NominaController {
                 order: [['fecha', 'ASC']]
             });
 
-            // Calcular detalle
+            // Calcular detalle de comisiones
             let totalComisiones = 0;
             const serviciosPrestados = ingresos.map(ingreso => {
                 const porcentaje = ingreso.servicioInfo.porcentaje || 0;
@@ -163,6 +194,31 @@ class NominaController {
                 };
             });
 
+            // Obtener descuentos del período
+            const descuentos = await DescuentoNomina.findAll({
+                where: {
+                    idEmpleado: empleado,
+                    fechaDescuento: {
+                        [Op.between]: [fecha_inicio, fecha_fin]
+                    }
+                },
+                order: [['fechaDescuento', 'ASC']]
+            });
+
+            let totalDescuentos = 0;
+            const detalleDescuentos = descuentos.map(descuento => {
+                totalDescuentos += parseFloat(descuento.valor);
+                return {
+                    id: descuento.id,
+                    descripcion: descuento.descripcion,
+                    valor: parseFloat(descuento.valor),
+                    fecha: descuento.fechaDescuento
+                };
+            });
+
+            // Calcular total neto
+            const totalNeto = totalComisiones - totalDescuentos;
+
             return ApiResponse.success(res, {
                 empleado: empleadoInfo,
                 periodo: {
@@ -170,9 +226,12 @@ class NominaController {
                     fecha_fin
                 },
                 servicios_prestados: serviciosPrestados,
+                descuentos: detalleDescuentos,
                 resumen: {
                     total_servicios: ingresos.length,
-                    total_comisiones: parseFloat(totalComisiones.toFixed(2))
+                    total_comisiones: parseFloat(totalComisiones.toFixed(2)),
+                    total_descuentos: parseFloat(totalDescuentos.toFixed(2)),
+                    total_neto: parseFloat(totalNeto.toFixed(2))
                 }
             }, 'Detalle de nómina obtenido exitosamente');
 
@@ -257,9 +316,27 @@ class NominaController {
                 };
             });
 
+            // Obtener descuentos
+            const descuentos = await DescuentoNomina.findAll({
+                where: {
+                    idEmpleado: nomina.empleado,
+                    fechaDescuento: {
+                        [Op.between]: [nomina.fecha_inicio, nomina.fecha_fin]
+                    }
+                }
+            });
+
+            const detalleDescuentos = descuentos.map(descuento => ({
+                id: descuento.id,
+                descripcion: descuento.descripcion,
+                valor: parseFloat(descuento.valor),
+                fecha: descuento.fechaDescuento
+            }));
+
             return ApiResponse.success(res, {
                 nomina,
-                detalle: detalleServicios
+                detalle: detalleServicios,
+                descuentos: detalleDescuentos
             }, 'Nómina obtenida exitosamente');
 
         } catch (error) {
