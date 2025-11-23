@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const historialTarifaController = require('../controllers/historialTarifa.controller');
-const { authenticate } = require('../middleware/auth.middleware');
+const { authenticateToken, authorize } = require('../middlewares/auth');
 
-router.use(authenticate);
+router.use(authenticateToken);
 
-router.get('/', historialTarifaController.getAll);
+router.get('/', authorize('Administrador', 'Gerente'), historialTarifaController.getAll);
 
-router.get('/resumen', historialTarifaController.getResumen);
+router.get('/resumen', authorize('Administrador', 'Gerente'), historialTarifaController.getResumen);
 
-router.get('/servicio/:id', historialTarifaController.getByServicio);
+router.get('/servicio/:id', authorize('Administrador', 'Gerente'), historialTarifaController.getByServicio);
 
-router.get('/servicio/:id/actual', historialTarifaController.getTarifaActual);
-
+router.get('/servicio/:id/actual', authorize('Administrador', 'Gerente'), historialTarifaController.getTarifaActual);
 module.exports = router;
