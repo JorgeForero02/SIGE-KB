@@ -1,7 +1,6 @@
 const { DescuentoNomina, Usuario } = require('../models');
 const ApiResponse = require('../utils/response');
 const { Op } = require('sequelize');
-
 class DescuentoNominaController {
 
     async createDescuentoNomina(req, res) {
@@ -13,9 +12,9 @@ class DescuentoNominaController {
                 fechaDescuento,
                 idEmpleado
             });
-            return ApiResponse.successResponseWithData(res, 'Descuento de nómina creado exitosamente', nuevoDescuento);
+            return ApiResponse.success(res, 'Descuento de nómina creado exitosamente', nuevoDescuento);
         } catch (error) {
-            return ApiResponse.errorResponse(res, error.message);
+            return ApiResponse.error(res, error.message);
         }
     }
 
