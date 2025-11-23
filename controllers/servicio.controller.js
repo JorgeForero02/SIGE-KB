@@ -7,8 +7,8 @@ class ServicioController {
     async getAll(req, res) {
         try {
             const { estado, categoria } = req.query;
-
             const where = {};
+
             if (estado !== undefined) where.estado = estado;
             if (categoria) where.categoria = categoria;
 
@@ -72,6 +72,7 @@ class ServicioController {
             const existente = await Servicio.findOne({
                 where: { nombre, categoria }
             });
+
             if (existente) {
                 return ApiResponse.error(
                     res,
@@ -80,6 +81,7 @@ class ServicioController {
                 );
             }
 
+            // Crear el servicio
             const servicio = await Servicio.create({
                 nombre,
                 descripcion,
@@ -90,21 +92,24 @@ class ServicioController {
                 estado: 1
             });
 
-            // Crear registro en historial de tarifa
+            // Crear registro inicial en historial de tarifa
+            const fechaInicio = new Date().toISOString().split('T')[0];
             await HistorialTarifa.create({
                 servicio: servicio.id,
-                fecha_inicio: new Date().toISOString().split('T')[0],
+                fecha_inicio: fechaInicio,
                 fecha_fin: null,
                 valor: precio
             });
 
+            // Registrar auditoría
             await AuditoriaService.registrar(
                 'Servicio',
                 'Crear',
-                `Servicio creado: ${nombre} - Precio: ${precio}`,
+                `Servicio creado: ${nombre} - Precio inicial: ${precio}`,
                 req.user.id
             );
 
+            // Obtener servicio completo con relaciones
             const servicioCompleto = await Servicio.findByPk(servicio.id, {
                 include: [{ model: Categoria, as: 'categoriaInfo' }]
             });
@@ -129,16 +134,17 @@ class ServicioController {
                 estado
             } = req.body;
 
+            // Buscar servicio existente
             const servicio = await Servicio.findByPk(id);
             if (!servicio) {
                 return ApiResponse.notFound(res, 'Servicio no encontrado');
             }
 
-            // Si cambió el precio, cerrar tarifa actual y crear nueva
+            // Manejo del cambio de precio
             if (precio && parseFloat(precio) !== parseFloat(servicio.precio)) {
                 const fechaHoy = new Date().toISOString().split('T')[0];
 
-                // Cerrar tarifa actual
+                // Cerrar la tarifa actual estableciendo fecha_fin
                 await HistorialTarifa.update(
                     { fecha_fin: fechaHoy },
                     {
@@ -149,7 +155,7 @@ class ServicioController {
                     }
                 );
 
-                // Crear nueva tarifa
+                // Crear nueva tarifa con fecha de inicio actual
                 await HistorialTarifa.create({
                     servicio: id,
                     fecha_inicio: fechaHoy,
@@ -157,6 +163,7 @@ class ServicioController {
                     valor: precio
                 });
 
+                // Registrar cambio de tarifa en auditoría
                 await AuditoriaService.registrar(
                     'Servicio',
                     'Cambio de tarifa',
@@ -174,6 +181,7 @@ class ServicioController {
                         id: { [Op.ne]: id }
                     }
                 });
+
                 if (existente) {
                     return ApiResponse.error(
                         res,
@@ -183,6 +191,7 @@ class ServicioController {
                 }
             }
 
+            // Actualizar el servicio
             await servicio.update({
                 nombre: nombre || servicio.nombre,
                 descripcion: descripcion !== undefined ? descripcion : servicio.descripcion,
@@ -193,6 +202,7 @@ class ServicioController {
                 estado: estado !== undefined ? estado : servicio.estado
             });
 
+            // Registrar actualización en auditoría
             await AuditoriaService.registrar(
                 'Servicio',
                 'Actualizar',
@@ -200,6 +210,7 @@ class ServicioController {
                 req.user.id
             );
 
+            // Obtener servicio actualizado con relaciones
             const servicioActualizado = await Servicio.findByPk(id, {
                 include: [{ model: Categoria, as: 'categoriaInfo' }]
             });
@@ -220,9 +231,10 @@ class ServicioController {
                 return ApiResponse.notFound(res, 'Servicio no encontrado');
             }
 
-            // Soft delete
+            // Soft delete - cambiar estado a inactivo
             await servicio.update({ estado: 0 });
 
+            // Registrar eliminación en auditoría
             await AuditoriaService.registrar(
                 'Servicio',
                 'Eliminar',

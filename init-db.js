@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { sequelize, Rol, Usuario } = require('../models');
+const { sequelize, Rol, Usuario } = require('./models');
 
 async function initDatabase() {
     try {
