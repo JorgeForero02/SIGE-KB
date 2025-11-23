@@ -39,7 +39,7 @@ class DescuentoNominaController {
         try {
             const { id } = req.params;
             const filtros = { id };
-            if (req.user.role !== 'admin' && req.user.role !== 'gerente') {
+            if (req.user.role !== 'Administrador' && req.user.role !== 'Gerente') {
                 filtros.idEmpleado = req.user.id;
             }
 
