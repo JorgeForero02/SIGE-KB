@@ -21,7 +21,7 @@ class DescuentoNominaController {
     async getAllDescuentosNomina(req, res) {
         try {
             const filtros = {};
-            if (req.user.role !== 'admin' && req.user.role !== 'gerente') {
+            if (req.user.role !== 'Administrador' && req.user.role !== 'Gerente') {
                 filtros.idEmpleado = req.user.id;
             }
 
