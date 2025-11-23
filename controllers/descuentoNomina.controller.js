@@ -3,7 +3,7 @@ const ApiResponse = require('../utils/response');
 const { Op } = require('sequelize');
 
 class DescuentoNominaController {
-    // Crear un nuevo descuento de nómina
+
     async createDescuentoNomina(req, res) {
         try {
             const { descripcion, valor, fechaDescuento, idEmpleado } = req.body;
@@ -18,35 +18,40 @@ class DescuentoNominaController {
             return ApiResponse.errorResponse(res, error.message);
         }
     }
-    // Obtener todos los descuentos de nómina
+
     async getAllDescuentosNomina(req, res) {
         try {
-            //filtrar por empleado considerando el token de autenticación
             const filtros = {};
             if (req.user.role !== 'admin' && req.user.role !== 'gerente') {
                 filtros.idEmpleado = req.user.id;
             }
-            const descuentos = await DescuentoNomina.findAll({ where: filtros, include: Usuario });
 
+            const descuentos = await DescuentoNomina.findAll({
+                where: filtros,
+                include: { model: Usuario, as: 'empleadoInfo' }
+            });
             return ApiResponse.success(res, 'Descuentos de nómina obtenidos exitosamente', descuentos);
         } catch (error) {
             return ApiResponse.error(res, error.message);
         }
     }
 
-    // Obtener un descuento de nómina por ID
     async getDescuentoNominaById(req, res) {
         try {
-        //filtrar por empleado considerando el token de autenticación
             const { id } = req.params;
             const filtros = { id };
             if (req.user.role !== 'admin' && req.user.role !== 'gerente') {
                 filtros.idEmpleado = req.user.id;
             }
-            const descuento = await DescuentoNomina.findOne({ where: filtros, include: Usuario });
+
+            const descuento = await DescuentoNomina.findOne({
+                where: filtros,
+                include: { model: Usuario, as: 'empleadoInfo' }
+            });
             if (!descuento) {
                 return ApiResponse.notFound(res, 'Descuento de nómina no encontrado');
             }
+
             return ApiResponse.success(res, 'Descuento de nómina obtenido exitosamente', descuento);
         } catch (error) {
             return ApiResponse.error(res, error.message);
