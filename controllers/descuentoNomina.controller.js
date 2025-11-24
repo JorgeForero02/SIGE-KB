@@ -1,6 +1,7 @@
 const { DescuentoNomina, Usuario } = require('../models');
 const ApiResponse = require('../utils/response');
 const { Op } = require('sequelize');
+
 class DescuentoNominaController {
 
     async createDescuentoNomina(req, res) {
@@ -21,13 +22,19 @@ class DescuentoNominaController {
     async getAllDescuentosNomina(req, res) {
         try {
             const filtros = {};
-            if (req.user.role !== 'Administrador' && req.user.role !== 'Gerente') {
+            console.log(req.user);
+            
+            if (req.user.rolNombre !== 'Administrador' && req.user.rolNombre !== 'Gerente') {
                 filtros.idEmpleado = req.user.id;
             }
 
             const descuentos = await DescuentoNomina.findAll({
                 where: filtros,
-                include: { model: Usuario, as: 'empleadoInfo' }
+                include: { 
+                    model: Usuario, 
+                    as: 'empleadoInfo',
+                    attributes: ['id', 'nombre', 'apellido', 'documento', 'email', 'telefono']
+                }
             });
             return ApiResponse.success(res, 'Descuentos de nómina obtenidos exitosamente', descuentos);
         } catch (error) {
@@ -39,14 +46,20 @@ class DescuentoNominaController {
         try {
             const { id } = req.params;
             const filtros = { id };
-            if (req.user.role !== 'Administrador' && req.user.role !== 'Gerente') {
+            
+            if (req.user.rolNombre !== 'Administrador' && req.user.rolNombre !== 'Gerente') {
                 filtros.idEmpleado = req.user.id;
             }
 
             const descuento = await DescuentoNomina.findOne({
                 where: filtros,
-                include: { model: Usuario, as: 'empleadoInfo' }
+                include: { 
+                    model: Usuario, 
+                    as: 'empleadoInfo',
+                    attributes: ['id', 'nombre', 'apellido', 'documento', 'email', 'telefono']
+                } 
             });
+            
             if (!descuento) {
                 return ApiResponse.notFound(res, 'Descuento de nómina no encontrado');
             }
