@@ -13,7 +13,7 @@ class DescuentoNominaController {
                 fechaDescuento,
                 idEmpleado
             });
-            return ApiResponse.success(res, 'Descuento de nómina creado exitosamente', nuevoDescuento);
+            return ApiResponse.success(res, nuevoDescuento,'Descuento de nómina creado exitosamente');
         } catch (error) {
             return ApiResponse.error(res, error.message);
         }
@@ -36,7 +36,7 @@ class DescuentoNominaController {
                     attributes: ['id', 'nombre', 'apellido', 'documento', 'email', 'telefono']
                 }
             });
-            return ApiResponse.success(res, 'Descuentos de nómina obtenidos exitosamente', descuentos);
+            return ApiResponse.success(res, descuentos,'Descuentos de nómina obtenidos exitosamente');
         } catch (error) {
             return ApiResponse.error(res, error.message);
         }
@@ -64,7 +64,7 @@ class DescuentoNominaController {
                 return ApiResponse.notFound(res, 'Descuento de nómina no encontrado');
             }
 
-            return ApiResponse.success(res, 'Descuento de nómina obtenido exitosamente', descuento);
+            return ApiResponse.success(res, descuento,'Descuento de nómina obtenido exitosamente');
         } catch (error) {
             return ApiResponse.error(res, error.message);
         }
