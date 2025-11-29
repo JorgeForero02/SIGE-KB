@@ -31,3 +31,5 @@ router.post('/',
     validate,
     cierreDiarioController.create
 );
+
+module.exports = router;
