@@ -13,7 +13,7 @@ app.use(helmet());
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'https://karenbeauty.up.railway.app',
   credentials: true,
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
   allowedHeaders: "Content-Type, Authorization"
 };
 
