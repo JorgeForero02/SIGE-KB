@@ -8,19 +8,23 @@ const helmet = require('helmet');
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: false,
+  })
+);
 
+// Permitir todos los orígenes
 const corsOptions = {
-  origin:'*',
+  origin: "*",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type, Authorization"
+  allowedHeaders: "Content-Type, Authorization",
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // <-- IMPORTANTE
+app.options('*', cors(corsOptions));  // Habilita preflight
 
-
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,33 +39,21 @@ app.get('/ping', (req, res) => {
 // Rutas de la API
 app.use('/api', routes);
 
-// Middleware de manejo de errores
+// Manejo de errores
 app.use(errorHandler);
 
-// Sincronizar base de datos y arrancar servidor
 const PORT = process.env.PORT || 3000;
 
 db.sequelize.authenticate()
   .then(async () => {
     console.log('Conexión a la base de datos establecida correctamente');
-
-    if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync();
-    } else {
-      await db.sequelize.sync();
-      console.log('Modelos sincronizados');
-    }
-
+    await db.sequelize.sync();
   })
   .then(() => {
-    console.log('Modelos sincronizados con la base de datos');
-
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en el puerto ${PORT}`);
-      console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`URL: http://localhost:${PORT}`);
     });
   })
   .catch(err => {
-    console.error('? Error al conectar con la base de datos:', err);
+    console.error('Error al conectar con la base de datos:', err);
   });
