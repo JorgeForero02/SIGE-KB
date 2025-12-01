@@ -12,7 +12,6 @@ app.use(helmet());
 
 const corsOptions = {
   origin:'*',
-  credentials: true,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
   allowedHeaders: "Content-Type, Authorization"
 };
